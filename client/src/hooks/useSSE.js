@@ -30,10 +30,30 @@ import { useAuth } from "../auth/AuthContext.jsx";
 export function useSSE(url, onMessage) {
   const { user } = useAuth();
 
-  useEffect(() => {
-    // TODO: implement the hook body here.
-    // Remove this comment and the line below when you are done.
-    return;
+    useEffect(() => {
+    // 1. Stop if no user is logged in
+    if (!user) return;
 
+    // 2. Create the SSE connection
+    const source = new EventSource(url, {
+      withCredentials: true,
+    });
+
+    // 3. Handle incoming messages
+    source.onmessage = (event) => {
+      try {
+        onMessage(JSON.parse(event.data));
+      } catch (error) {
+        console.error("Error parsing SSE message:", error);
+      }
+    };
+
+    // 4. Handle connection errors
+    source.onerror = (error) => {
+      console.error("SSE connection error:", error);
+    };
+
+    // 5. Close the connection during cleanup
+    return () => source.close();
   }, [url, user, onMessage]);
 }
